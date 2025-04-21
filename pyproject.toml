@@ -1,0 +1,25 @@
+[project]
+name = "tinyprint-x6h"
+version = "0.1.0"
+description = "Python API for the X6h thermal printer over BLE, compatible with the TinyPrint app."
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+authors = [
+  {name = "Maksim Nazarov"}
+]
+dependencies = [
+  "bleak>=0.20.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/nazarovmi/tinyprint-x6h"
+Repository = "https://github.com/nazarovmi/tinyprint-x6h"
+Issues = "https://github.com/nazarovmi/tinyprint-x6h/issues"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["tinyprint_x6h"]
