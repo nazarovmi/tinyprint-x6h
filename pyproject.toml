@@ -9,7 +9,8 @@ authors = [
   {name = "Maksim Nazarov"}
 ]
 dependencies = [
-  "bleak>=0.20.0"
+  "bleak ~= 0.22.0",
+  "python-lzo ~= 1.15"
 ]
 
 [project.urls]
