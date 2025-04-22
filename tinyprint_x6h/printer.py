@@ -1,11 +1,18 @@
+import asyncio
 from bleak import BleakClient, BleakError, BleakScanner
 import logging
+import math
+
+from .protocol import create_print_commands
 
 logger = logging.getLogger(__name__)
 
 SUPPORTED_PRINTER_PREFIXES = ["x6h-", "X6h-"]
+UUID_WRITE = "0000ae01-0000-1000-8000-00805f9b34fb"
 RETRY_ATTEMPTS = 3
 RETRY_DELAY = 1.0  # seconds
+PACKET_SIZE = 20
+PACKET_DELAY = 4 / 1000  # seconds
 
 async def find_printer_device():
     logger.info("Scanning for devices")
@@ -29,9 +36,10 @@ async def connect(address: str | None = None) -> BleakClient:
     logger.info("Connecting to %s", address)
     for attempt in range(1, RETRY_ATTEMPTS + 1):
         try:
-            logger.debug("Retrying connection (attempt %d of %d)", attempt, RETRY_ATTEMPTS)
+            logger.debug("Retrying connection (%d/%d)", attempt, RETRY_ATTEMPTS)
             client = BleakClient(address)
             await client.connect()
+            logger.info("Connected to %s", address)
             return client
         except BleakError as e:
             logger.warning("Connection failed: %s", e)
@@ -46,6 +54,19 @@ async def disconnect(client: BleakClient):
     await client.disconnect()
 
 async def print(client: BleakClient, data: bytes):
-    # TODO: Implement the print function
-    logger.info("Sending data to device")
-    logger.debug("Data: %s", data.hex())
+    if not client.is_connected:
+        logger.error("Printer is not connected")
+        raise RuntimeError("Printer is not connected")
+
+    logger.info("Starting print job")
+
+    commands = create_print_commands(data)
+    logger.debug("Hex data: %s", commands.hex(" "))
+
+    for i in range(0, len(commands), PACKET_SIZE):
+        chunk = commands[i:i + PACKET_SIZE]
+        logger.debug("Writing bytes (%d:%d/%d): %s", i, i + PACKET_SIZE, len(commands), chunk.hex(" "))
+        await client.write_gatt_char(UUID_WRITE, chunk, response=False)
+        await asyncio.sleep(PACKET_DELAY)
+
+    logger.info("Print job completed")
